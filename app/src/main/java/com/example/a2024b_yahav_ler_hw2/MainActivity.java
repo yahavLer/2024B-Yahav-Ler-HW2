@@ -35,10 +35,18 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        btn_records.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, records_activity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     private void findViews() {
         btn_play_senssor = findViewById(R.id.btn_senssor);
         btn_playButton = findViewById(R.id.btn_Button);
+        btn_records = findViewById(R.id.btn_records);
     }
 }
