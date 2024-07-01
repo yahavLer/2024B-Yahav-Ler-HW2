@@ -16,7 +16,7 @@ public class GameActivity extends AppCompatActivity  {
         setContentView(R.layout.game_view);
         useSensors = getIntent().getBooleanExtra("useSensors", false);
 
-        game = new gameManager(this, this);
+        game = new gameManager(this, this, useSensors);
         game.findViews();
         game.initializeHorses();
         if (useSensors) {

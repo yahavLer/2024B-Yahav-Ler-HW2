@@ -1,7 +1,12 @@
 package com.example.a2024b_yahav_ler_hw2;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Context;
+import android.os.Build;
 import android.os.Handler;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -33,14 +38,15 @@ public class gameManager extends AppCompatActivity{
     private Context context;
     private AppCompatActivity  activity;
     private TextView numScore;
-
+    private boolean gameSensors;
     public gameManager() {
         super();
     }
 
-    public gameManager(Context context, AppCompatActivity gameActivity) {
+    public gameManager(Context context, AppCompatActivity gameActivity, boolean gameSensors) {
         this.context = context;
         this.activity = gameActivity;
+        this.gameSensors = gameSensors;
     }
 
 
@@ -69,29 +75,6 @@ public class gameManager extends AppCompatActivity{
         handler.postDelayed(runnable, delay);
     }
 
-    public void gameDone() {
-        stopGame();
-        Toast.makeText(context, "You lose", Toast.LENGTH_SHORT).show();
-        Log.d("pttt", "Game Done");
-        zoo_left.setEnabled(false);
-        zoo_right.setEnabled(false);
-        activity.finish();
-    }
-
-    public void stopGame() {
-        handler.removeCallbacks(runnable);
-    }
-
-    public void setSpeed(int yTilt) {
-        if (yTilt > 6) {
-            delay = 500;  // Increase speed
-        } else if (yTilt < -6) {
-            delay = 1500; // Decrease speed
-        } else {
-            delay = 1000; // Normal speed
-        }
-    }
-
     public void checkLives() {
         if (numLives == 0 && !isGameOver) {
             isGameOver = true;
@@ -110,29 +93,95 @@ public class gameManager extends AppCompatActivity{
     public void openAdvertisementDialog() {
         new MaterialAlertDialogBuilder(context).setTitle("No lives")
                 .setMessage("You lose, Do you want to play again?")
-                .setPositiveButton("Yes", (dialog, which) -> reset())
+                .setPositiveButton("Yes", (dialog, which) -> continueGame())
                 .setNegativeButton("No", (dialog, which) -> gameDone())
                 .show();
     }
 
-    public void reset() {
+    public void continueGame() {
         numLives = 3;
+        updateLive();
         isGameOver = false;
         zoo_left.setEnabled(true);
         zoo_right.setEnabled(true);
-        delay = 1000;
-        for (ImageView[] zoo_animal : zoo_animals) {
-            for (ImageView imageView : zoo_animal) {
-                imageView.setVisibility(View.INVISIBLE);
-            }
-        }
-        startGame(false);
+//        delay = 1000;
+//        for (ImageView[] zoo_animal : zoo_animals) {
+//            for (ImageView imageView : zoo_animal) {
+//                imageView.setVisibility(View.INVISIBLE);
+//            }
+//        }
+//        startGame(gameSensors);
+        start();
     }
 
-    public void checkPlace() {
-        if (zoo_animals[farmerPosRow][farmerPosCol].getVisibility() == View.VISIBLE) {
+    public void gameDone() {
+        stopGame();
+        Toast.makeText(context, "You lose", Toast.LENGTH_SHORT).show();
+        Log.d("pttt", "Game Done");
+        zoo_left.setEnabled(false);
+        zoo_right.setEnabled(false);
+        finish();
+    }
+
+    private void checkPlace() {
+        if (zoo_animals[farmerPosRow-1][farmerPosCol].getVisibility() == View.VISIBLE) {
             numLives--;
-            zoo_animals[farmerPosRow][farmerPosCol].setVisibility(View.INVISIBLE);
+            Log.d(TAG, "numLives: "+ numLives);
+            updateLive();
+            vibrate();
+        }
+    }
+
+    private void vibrate(){
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(500);
+            }
+        }
+    }
+
+    private void moveHorse() {
+        checkLives();
+        Random random = new Random();
+        int num;
+        for (int i = zoo_animals.length - 3; i >= 0; i--) {
+            for (int j = 0; j < zoo_animals[i].length; j++) {
+                if (i==zoo_animals.length-3){
+                    zoo_animals[i+1][j].setVisibility(View.INVISIBLE);
+                }
+                if (zoo_animals[i][j].getVisibility() == View.VISIBLE) {
+                    zoo_animals[i + 1][j].setVisibility(View.VISIBLE);
+                    zoo_animals[i][j].setVisibility(View.INVISIBLE);
+                }
+            }
+            if (i==0){
+                num= random.nextInt(3) ;
+                zoo_animals[0][num].setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    public void stopGame() {
+        handler.removeCallbacks(runnable);
+    }
+
+    private void start() {
+        handler.postDelayed(runnable, delay);
+    }
+
+    private void updateLive() {
+        int amountLive=zoo_live.length;
+        for (int i = 0; i < amountLive; i++) {
+            zoo_live[i].setVisibility(View.VISIBLE);
+        }
+        if (numLives<3){
+            int removeLive= zoo_live.length - numLives;
+            for (int i = 0; i <removeLive ; i++) {
+                zoo_live[(amountLive - i)-1].setVisibility(View.INVISIBLE);
+            }
         }
     }
 
@@ -141,7 +190,7 @@ public class gameManager extends AppCompatActivity{
             zoo_animals[farmerPosRow][farmerPosCol].setVisibility(View.INVISIBLE);
             farmerPosCol++;
             zoo_animals[farmerPosRow][farmerPosCol].setVisibility(View.VISIBLE);
-            checkPlace();
+//            checkPlace();
         }
     }
 
@@ -150,26 +199,25 @@ public class gameManager extends AppCompatActivity{
             zoo_animals[farmerPosRow][farmerPosCol].setVisibility(View.INVISIBLE);
             farmerPosCol--;
             zoo_animals[farmerPosRow][farmerPosCol].setVisibility(View.VISIBLE);
-            checkPlace();
+//            checkPlace();
         }
     }
 
-    public void moveHorse() {
-        for (int i = amountRow - 1; i > 0; i--) {
-            for (int j = 0; j < amountColl; j++) {
-                zoo_animals[i][j].setVisibility(zoo_animals[i - 1][j].getVisibility());
-            }
+    public void setSpeed(int yTilt) {
+        if (yTilt > 6) {
+            delay = 500;  // Increase speed
+        } else if (yTilt < -6) {
+            delay = 1500; // Decrease speed
+        } else {
+            delay = 1000; // Normal speed
         }
-        for (int j = 0; j < amountColl; j++) {
-            zoo_animals[0][j].setVisibility(View.INVISIBLE);
-        }
-        generateHorse();
     }
 
-    private void generateHorse() {
-        int col = new Random().nextInt(amountColl);
-        zoo_animals[0][col].setVisibility(View.VISIBLE);
-    }
+
+//    private void generateHorse() {
+//        int col = new Random().nextInt(amountColl);
+//        zoo_animals[0][col].setVisibility(View.VISIBLE);
+//    }
 
     public void findViews() {
         this.zoo_left = activity.findViewById(R.id.zoo_left);
