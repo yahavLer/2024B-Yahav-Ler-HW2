@@ -38,11 +38,11 @@ public class gameManager extends AppCompatActivity{
         super();
     }
 
-    public gameManager(Context context, AppCompatActivity  gameActivity) {
-        setContentView(R.layout.game_view);
+    public gameManager(Context context, AppCompatActivity gameActivity) {
         this.context = context;
         this.activity = gameActivity;
     }
+
 
 
     private void initButton() {
@@ -211,13 +211,36 @@ public class gameManager extends AppCompatActivity{
     }
 
     public void initializeHorses() {
-        for (int i = 0; i < amountRow - 1; i++) {
-            for (int j = 0; j < amountColl; j++) {
-                zoo_animals[i][j].setVisibility(View.INVISIBLE);
+        Random random = new Random();
+        for (int i = 0; i < zoo_animals.length-1; i++) {
+            for (int j = 0; j < zoo_animals[i].length; j++) {
+                if (i == 0) {
+                    zoo_animals[i][j].setVisibility(random.nextBoolean() ? View.VISIBLE : View.INVISIBLE);
+                } else {
+                    zoo_animals[i][j].setVisibility(View.INVISIBLE);
+                }
             }
         }
-        zoo_animals[farmerPosRow][farmerPosCol].setVisibility(View.VISIBLE);
+
+        for (int i = 1; i < zoo_animals.length-1; i++) {
+            for (int j = 0; j < zoo_animals[i].length; j++) {
+                if (zoo_animals[i - 1][j].getVisibility() == View.VISIBLE) {
+                    zoo_animals[i][j].setVisibility(View.INVISIBLE);
+                } else if (random.nextBoolean()) {
+                    zoo_animals[i][j].setVisibility(View.VISIBLE);
+                }
+            }
+        }
     }
+
+//    public void initializeHorses() {
+//        for (int i = 0; i < amountRow - 1; i++) {
+//            for (int j = 0; j < amountColl; j++) {
+//                zoo_animals[i][j].setVisibility(View.INVISIBLE);
+//            }
+//        }
+//        zoo_animals[farmerPosRow][farmerPosCol].setVisibility(View.VISIBLE);
+//    }
 
     private void initMoveDetector() {
         moveDetector = new MoveDetector(context, new MoveCallback() {

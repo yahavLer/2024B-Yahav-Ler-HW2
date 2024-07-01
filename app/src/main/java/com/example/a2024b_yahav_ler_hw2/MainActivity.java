@@ -18,19 +18,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_view);
         findViews();
-        btnPlayButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, gameManager.class);
-                intent.putExtra("useSensors", false);
-                startActivity(intent);
-            }
-        });
         btnPlaySensor.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, gameManager.class);
+                Intent intent = new Intent(MainActivity.this, GameActivity.class);
                 intent.putExtra("useSensors", true);
+                startActivity(intent);
+            }
+        });
+
+        btnPlayButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, GameActivity.class);
+                intent.putExtra("useSensors",false);
                 startActivity(intent);
             }
         });
