@@ -37,8 +37,12 @@ public class gameManager extends AppCompatActivity{
     private MoveDetector moveDetector;
     private Context context;
     private AppCompatActivity  activity;
-    private TextView numScore;
     private boolean gameSensors;
+    private TextView numScore;
+    private int score = 0; // משתנה ניקוד
+    private final Handler scoreHandler = new Handler(); // Handler עבור הניקוד
+    private final int SCORE_INTERVAL = 5000; // כל כמה זמן להוסיף נקודות (מילישניות)
+
     public gameManager() {
         super();
     }
@@ -49,6 +53,19 @@ public class gameManager extends AppCompatActivity{
         this.gameSensors = gameSensors;
     }
 
+    private final Runnable scoreRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!isGameOver) {
+                score += 10;
+                updateScore();
+                scoreHandler.postDelayed(this, SCORE_INTERVAL);
+            }
+        }
+    };
+    private void updateScore() {
+        runOnUiThread(() -> numScore.setText(String.valueOf(score)));
+    }
 
 
     private void initButton() {
@@ -73,6 +90,7 @@ public class gameManager extends AppCompatActivity{
             }
         };
         handler.postDelayed(runnable, delay);
+        scoreHandler.postDelayed(scoreRunnable, SCORE_INTERVAL); // התחלת רץ הניקוד
     }
 
     public void checkLives() {
@@ -165,6 +183,7 @@ public class gameManager extends AppCompatActivity{
 
     public void stopGame() {
         handler.removeCallbacks(runnable);
+        scoreHandler.removeCallbacks(scoreRunnable); // הפסקת רץ הניקוד
     }
 
     private void start() {
