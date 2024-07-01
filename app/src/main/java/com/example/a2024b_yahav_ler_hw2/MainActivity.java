@@ -5,37 +5,36 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button  btn_playButton;
-    Button  btn_play_senssor;
-    Button  btn_records;
+    Button btnPlayButton;
+    Button btnPlaySensor;
+    Button btnRecords;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_view);
         findViews();
-        btn_playButton.setOnClickListener(new View.OnClickListener() {
+        btnPlayButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, button_activity.class);
+                Intent intent = new Intent(MainActivity.this, gameManager.class);
+                intent.putExtra("useSensors", false);
                 startActivity(intent);
             }
         });
-        btn_play_senssor.setOnClickListener(new View.OnClickListener() {
+        btnPlaySensor.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, senssor_activity.class);
+                Intent intent = new Intent(MainActivity.this, gameManager.class);
+                intent.putExtra("useSensors", true);
                 startActivity(intent);
             }
         });
-        btn_records.setOnClickListener(new View.OnClickListener() {
+        btnRecords.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, records_activity.class);
@@ -45,8 +44,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void findViews() {
-        btn_play_senssor = findViewById(R.id.btn_senssor);
-        btn_playButton = findViewById(R.id.btn_Button);
-        btn_records = findViewById(R.id.btn_records);
+        btnPlaySensor = findViewById(R.id.btn_senssor);
+        btnPlayButton = findViewById(R.id.btn_Button);
+        btnRecords = findViewById(R.id.btn_records);
     }
 }
