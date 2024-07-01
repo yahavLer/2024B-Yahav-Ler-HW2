@@ -133,8 +133,7 @@ public class gameManager extends AppCompatActivity{
     }
 
     private void vibrate(){
-        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        if (vibrator != null) {
+        Vibrator vibrator = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);        if (vibrator != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
             } else {
