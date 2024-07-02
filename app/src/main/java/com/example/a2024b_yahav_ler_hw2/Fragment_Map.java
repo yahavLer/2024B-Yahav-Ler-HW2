@@ -17,10 +17,12 @@ public class Fragment_Map extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
+        MaterialTextView mapLBLLocation = view.findViewById(R.id.map_LBL_location);
 
-        map_LBL_location = view.findViewById(R.id.map_LBL_location);
+        // Set your list of locations here
+        mapLBLLocation.setText("Location 1\nLocation 2\nLocation 3");
 
         return view;
     }

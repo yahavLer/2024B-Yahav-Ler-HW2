@@ -26,4 +26,19 @@ public class GameActivity extends AppCompatActivity  {
         }
         game.startGame(useSensors);
     }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (game.getMoveDetector() != null) {
+            game.getMoveDetector().start();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (game.getMoveDetector() != null) {
+            game.getMoveDetector().stop();
+        }
+    }
 }

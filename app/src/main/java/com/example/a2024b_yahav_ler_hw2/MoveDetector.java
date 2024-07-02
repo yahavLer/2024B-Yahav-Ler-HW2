@@ -15,11 +15,13 @@ public class MoveDetector {
     private Sensor sensor;
     private SensorEventListener sensorEventListener;
 
-    private int moveCountX = 0;
-    private int moveCountY = 0;
     private long timestamp = 0l;
 
     private MoveCallback moveCallback;
+    private int tiltRightCount=0;
+    private int tiltLeftCount=0;
+    private int tiltBackwardCount=0;
+    private int tiltForwardCount=0;
 
     public MoveDetector(Context context,MoveCallback moveCallback) {
         this.sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
@@ -28,13 +30,22 @@ public class MoveDetector {
         initEventListener();
     }
 
-    public int getMoveCountX() {
-        return moveCountX;
+    public int getTiltRightCount() {
+        return tiltRightCount;
     }
 
-    public int getMoveCountY() {
-        return moveCountY;
+    public int getTiltBackwardCount() {
+        return tiltBackwardCount;
     }
+
+    public int getTiltForwardCount() {
+        return tiltForwardCount;
+    }
+
+    public int getTiltLeftCount() {
+        return tiltLeftCount;
+    }
+
 
     private void initEventListener() {
         this.sensorEventListener = new SensorEventListener() {
@@ -53,22 +64,35 @@ public class MoveDetector {
     }
 
     private void calculateMove(float x, float y) {
-        if (System.currentTimeMillis() - timestamp > 500){
+        if (System.currentTimeMillis() - timestamp > 500) {
             timestamp = System.currentTimeMillis();
-            if (x > 6.0 || x < -6.0){
-                moveCountX++;
-                if (moveCallback != null){
-                    moveCallback.moveX();
+
+            if (x < -6.0) {
+                tiltRightCount++;
+                if (moveCallback != null) {
+                    moveCallback.moveRight();
+                }
+            } else if (x > 6.0) {
+                tiltLeftCount++;
+                if (moveCallback != null) {
+                    moveCallback.moveLeft();
                 }
             }
-            if (y > 6.0 || y < -6.0){
-                moveCountY++;
-                if (moveCallback != null){
-                    moveCallback.moveY();
+
+            if (y > 6.0) {
+                tiltBackwardCount++;
+                if (moveCallback != null) {
+                    moveCallback.moveBackward();
+                }
+            } else if (y < -6.0) {
+                tiltForwardCount++;
+                if (moveCallback != null) {
+                    moveCallback.moveForward();
                 }
             }
         }
     }
+
 
 
     public void start(){

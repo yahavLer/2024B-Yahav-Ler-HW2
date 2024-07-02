@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.textview.MaterialTextView;
@@ -23,19 +24,12 @@ public class Fragment_List extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_list_records, container, false);
+        MaterialTextView listLBLUser = view.findViewById(R.id.list_LBL_user);
 
-        list_LBL_user = view.findViewById(R.id.list_LBL_user);
-
-        list_LBL_user.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (callBackList != null) {
-                    callBackList.showLocationInMap("Avi");
-                }
-            }
-        });
+        // Set your list of records here
+        listLBLUser.setText("Record 1\nRecord 2\nRecord 3");
 
         return view;
     }
