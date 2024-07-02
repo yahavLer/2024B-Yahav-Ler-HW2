@@ -56,7 +56,7 @@ public class gameManager extends AppCompatActivity{
         this.context = context;
         this.activity = gameActivity;
         this.gameSensors = gameSensors;
-        this.sharedPreferences = context.getSharedPreferences("your records", Context.MODE_PRIVATE);
+        this.sharedPreferences = context.getSharedPreferences("GameScores", Context.MODE_PRIVATE);
     }
 
     private final Runnable scoreRunnable = new Runnable() {
@@ -64,7 +64,7 @@ public class gameManager extends AppCompatActivity{
         public void run() {
             if (!isGameOver) {
                 score += 10;
-                numScore.setText(score);
+                numScore.setText(String.valueOf(score));
                 scoreHandler.postDelayed(this, SCORE_INTERVAL);
             }
         }
@@ -233,7 +233,7 @@ public class gameManager extends AppCompatActivity{
     public void continueGame() {
         numLives = 3;
         score = 0;
-        numScore.setText(score);
+        numScore.setText(String.valueOf(score));
         updateLive();
         isGameOver = false;
         zoo_left.setEnabled(true);
