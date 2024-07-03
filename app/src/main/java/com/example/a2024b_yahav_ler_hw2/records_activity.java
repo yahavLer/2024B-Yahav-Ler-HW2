@@ -1,54 +1,88 @@
 package com.example.a2024b_yahav_ler_hw2;
 
-import android.content.Context;
+import android.Manifest;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.widget.FrameLayout;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentTransaction;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class records_activity extends AppCompatActivity {
-    private Fragment_List fragmentList;
-    private Fragment_Map fragmentMap;
+
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
+    private FrameLayout main_LAY_top, main_LAY_bottom;
+    private Fragment_List fragment_list;
+    private Fragment_Map fragment_map;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.records_view);
 
-        // Add List Records Fragment to main_LAY_top
+        main_LAY_top = findViewById(R.id.main_LAY_top);
+        main_LAY_bottom = findViewById(R.id.main_LAY_bottom);
+
+        fragment_list = new Fragment_List();
+        fragment_map = new Fragment_Map();
+
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        fragmentList = new Fragment_List();
-        transaction.replace(R.id.main_LAY_top, fragmentList);
+        transaction.replace(R.id.main_LAY_top, fragment_list);
+        transaction.replace(R.id.main_LAY_bottom, fragment_map);
         transaction.commit();
 
-        // Add Map Fragment to main_LAY_bottom
-        FragmentTransaction transaction2 = getSupportFragmentManager().beginTransaction();
-        fragmentMap = new Fragment_Map();
-        transaction2.replace(R.id.main_LAY_bottom, fragmentMap);
-        transaction2.commit();
-
-        loadScores();
-    }
-
-    private void loadScores() {
-        SharedPreferences sharedPreferences = getSharedPreferences("GameScores", Context.MODE_PRIVATE);
-        Map<String, ?> allEntries = sharedPreferences.getAll();
-        StringBuilder scores = new StringBuilder();
-        for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
-            scores.append(entry.getValue().toString()).append("\n");
-        }
-        if (fragmentList != null) {
-            fragmentList.setScores(scores.toString());
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+        } else {
+            loadScoresAndLocations();
         }
     }
 
-    private CallBack_List meshulash = new CallBack_List() {
-        @Override
-        public void showLocationInMap(String user) {
-            fragmentMap.setLocation(32.4, 34.5);
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                loadScoresAndLocations();
+            } else {
+                // Handle permission denial appropriately
+            }
         }
-    };
+    }
+
+    private void loadScoresAndLocations() {
+        SharedPreferences sharedPreferences = getSharedPreferences("game_data", MODE_PRIVATE);
+        ArrayList<String> scoresList = new ArrayList<>();
+        ArrayList<Double> latList = new ArrayList<>();
+        ArrayList<Double> lonList = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            String score = sharedPreferences.getString("score_" + i, null);
+            if (score != null) {
+                scoresList.add(score);
+                latList.add(Double.longBitsToDouble(sharedPreferences.getLong("lat_" + i, 0)));
+                lonList.add(Double.longBitsToDouble(sharedPreferences.getLong("lon_" + i, 0)));
+            }
+        }
+
+        Collections.sort(scoresList, Collections.reverseOrder());
+        StringBuilder scoresBuilder = new StringBuilder();
+        for (String score : scoresList) {
+            scoresBuilder.append(score).append("\n");
+        }
+
+        fragment_list.setScores(scoresBuilder.toString());
+
+        for (int i = 0; i < latList.size(); i++) {
+            fragment_map.addPendingLocation(latList.get(i), lonList.get(i));
+        }
+    }
 }

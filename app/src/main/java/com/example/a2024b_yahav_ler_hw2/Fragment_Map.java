@@ -1,108 +1,94 @@
 package com.example.a2024b_yahav_ler_hw2;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.textview.MaterialTextView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Fragment_Map extends Fragment implements OnMapReadyCallback {
 
-    private MaterialTextView mapLBLLocation;
-    private final int LOCATION_PERMISSION_REQUEST_CODE =1;
-    private GoogleMap myMap;
-    Location currentLocation;
-    FusedLocationProviderClient fusedLocationProviderClient;
+    private MaterialTextView map_LBL_location;
+    private MapView mapView;
+    private GoogleMap googleMap;
+    private List<LatLng> pendingLocations = new ArrayList<>();
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
-        mapLBLLocation = view.findViewById(R.id.map_LBL_location);
 
-        // Initialize the FusedLocationProviderClient
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity());
-
-        // Initialize the map fragment
-        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map_LBL_location);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
-        }
-
-        // Request location permission
-        requestLocationPermission();
+        map_LBL_location = view.findViewById(R.id.map_LBL_location);
+        mapView = view.findViewById(R.id.map);
+        mapView.onCreate(savedInstanceState);
+        mapView.getMapAsync(this);
 
         return view;
     }
 
-    @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        myMap = googleMap;
-        getCurrentLocation();
+        this.googleMap = googleMap;
+
+        // Add all pending locations to the map
+        for (LatLng location : pendingLocations) {
+            addMarkerToMap(location);
+        }
+        pendingLocations.clear();
     }
 
-    private void requestLocationPermission() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+    public void addPendingLocation(double lat, double lon) {
+        LatLng location = new LatLng(lat, lon);
+        if (googleMap == null) {
+            pendingLocations.add(location);
+        } else {
+            addMarkerToMap(location);
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private void getCurrentLocation() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            myMap.setMyLocationEnabled(true);
-            fusedLocationProviderClient.getLastLocation()
-                    .addOnSuccessListener(requireActivity(), location -> {
-                        if (location != null) {
-                            LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                            myMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15));
-
-                            // Update the TextView with the current location
-                            mapLBLLocation.setText("Lat: " + location.getLatitude() + ", Lon: " + location.getLongitude());
-                        }
-                    });
+    private void addMarkerToMap(LatLng location) {
+        if (googleMap != null) {
+            map_LBL_location.setText(location.latitude + ", " + location.longitude);
+            googleMap.addMarker(new MarkerOptions().position(location).title("Score Location"));
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 10));
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted
-                getCurrentLocation();
-            } else {
-                // Permission denied
-                Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show();
-            }
-        }
+    public void onResume() {
+        super.onResume();
+        mapView.onResume();
     }
 
-    public void setLocation(double lat, double lon) {
-        if (mapLBLLocation != null) {
-            mapLBLLocation.setText(lat + ", " + lon);
-        }
+    @Override
+    public void onPause() {
+        super.onPause();
+        mapView.onPause();
     }
-    
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mapView.onDestroy();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
+    }
 }

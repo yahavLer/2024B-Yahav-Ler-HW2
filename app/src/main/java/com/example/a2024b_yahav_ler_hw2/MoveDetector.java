@@ -67,24 +67,24 @@ public class MoveDetector {
         if (System.currentTimeMillis() - timestamp > 500) {
             timestamp = System.currentTimeMillis();
 
-            if (x < -6.0) {
+            if (x < -4.0) {
                 tiltRightCount++;
                 if (moveCallback != null) {
                     moveCallback.moveRight();
                 }
-            } else if (x > 6.0) {
+            } else if (x > 4.0) {
                 tiltLeftCount++;
                 if (moveCallback != null) {
                     moveCallback.moveLeft();
                 }
             }
 
-            if (y > 6.0) {
+            if (y > 4.0) {
                 tiltBackwardCount++;
                 if (moveCallback != null) {
                     moveCallback.moveBackward();
                 }
-            } else if (y < -6.0) {
+            } else if (y < -4.0) {
                 tiltForwardCount++;
                 if (moveCallback != null) {
                     moveCallback.moveForward();

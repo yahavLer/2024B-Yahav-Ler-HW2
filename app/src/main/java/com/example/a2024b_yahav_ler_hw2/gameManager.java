@@ -1,9 +1,11 @@
 package com.example.a2024b_yahav_ler_hw2;
 
 import static android.content.ContentValues.TAG;
-
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.VibrationEffect;
@@ -14,16 +16,17 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.appcompat.widget.AppCompatImageView;
-
+import androidx.core.app.ActivityCompat;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-
 import java.util.Random;
+import android.Manifest;
 
-public class gameManager extends AppCompatActivity{
+public class gameManager extends AppCompatActivity {
     private AppCompatImageButton zoo_left;
     private AppCompatImageButton zoo_right;
     private ImageView[][] zoo_animals;
@@ -33,20 +36,24 @@ public class gameManager extends AppCompatActivity{
     private boolean isGameOver = false;
     private int amountRow, amountColl;
     private int delay = 1000;
+    private int fastDelay = 500;
+    private int slowDelay = 1500;
     private int numLives = 3;
     private final Handler handler = new Handler();
     private Runnable runnable;
     private MoveDetector moveDetector;
     private Context context;
-    private AppCompatActivity  activity;
+    private AppCompatActivity activity;
     private boolean gameSensors;
     private TextView numScore;
     private int score = 0; // משתנה ניקוד
     private final Handler scoreHandler = new Handler(); // Handler עבור הניקוד
     private final int SCORE_INTERVAL = 5000; // כל כמה זמן להוסיף נקודות (מילישניות)
-
-    private SharedPreferences sharedPreferences ;
-
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private SharedPreferences sharedPreferences;
+    private GoogleMap myMap;
+    Location currentLocation;
+    FusedLocationProviderClient fusedLocationProviderClient;
 
     public gameManager() {
         super();
@@ -56,7 +63,7 @@ public class gameManager extends AppCompatActivity{
         this.context = context;
         this.activity = gameActivity;
         this.gameSensors = gameSensors;
-        this.sharedPreferences = context.getSharedPreferences("GameScores", Context.MODE_PRIVATE);
+        this.sharedPreferences = context.getSharedPreferences("game_data", Context.MODE_PRIVATE);
     }
 
     private final Runnable scoreRunnable = new Runnable() {
@@ -97,7 +104,7 @@ public class gameManager extends AppCompatActivity{
         handler.postDelayed(runnable, delay);
     }
 
-    private void startScore(){
+    private void startScore() {
         scoreHandler.postDelayed(scoreRunnable, SCORE_INTERVAL); // התחלת רץ הניקוד
     }
 
@@ -109,22 +116,24 @@ public class gameManager extends AppCompatActivity{
                     moveFarmerRight();
                 }
             }
+
             @Override
             public void moveLeft() {
                 if (moveDetector.getTiltLeftCount() > 0) {
                     moveFarmerLeft();
                 }
             }
+
             @Override
             public void moveBackward() {
-                if(moveDetector.getTiltBackwardCount()>0)
-                    setSpeed(moveDetector.getTiltBackwardCount());
+                if (moveDetector.getTiltBackwardCount() > 0)
+                    setSpeed(slowDelay);
             }
 
             @Override
             public void moveForward() {
-                if(moveDetector.getTiltForwardCount()>0)
-                    setSpeed(moveDetector.getTiltForwardCount());
+                if (moveDetector.getTiltForwardCount() > 0)
+                    setSpeed(fastDelay);
             }
         });
     }
@@ -140,16 +149,16 @@ public class gameManager extends AppCompatActivity{
         int num;
         for (int i = zoo_animals.length - 3; i >= 0; i--) {
             for (int j = 0; j < zoo_animals[i].length; j++) {
-                if (i==zoo_animals.length-3){
-                    zoo_animals[i+1][j].setVisibility(View.INVISIBLE);
+                if (i == zoo_animals.length - 3) {
+                    zoo_animals[i + 1][j].setVisibility(View.INVISIBLE);
                 }
                 if (zoo_animals[i][j].getVisibility() == View.VISIBLE) {
                     zoo_animals[i + 1][j].setVisibility(View.VISIBLE);
                     zoo_animals[i][j].setVisibility(View.INVISIBLE);
                 }
             }
-            if (i==0){
-                num= random.nextInt(5) ;
+            if (i == 0) {
+                num = random.nextInt(5);
                 zoo_animals[0][num].setVisibility(View.VISIBLE);
             }
         }
@@ -163,6 +172,7 @@ public class gameManager extends AppCompatActivity{
             checkPlace();
         }
     }
+
     //////// saved score ///////////
     public void lose() {
         zoo_left.setEnabled(false);
@@ -174,7 +184,7 @@ public class gameManager extends AppCompatActivity{
         new MaterialAlertDialogBuilder(context).setTitle("No lives")
                 .setMessage("your score: " + score +"\n Do you want to save your score?")
                 .setPositiveButton("Yes", (dialog, which) -> {
-                    openSaveScoreDialog();
+                    openSaveScoreDialog(score);
                 })
                 .setNegativeButton("No", (dialog, which) -> {
                     gameDone();
@@ -182,28 +192,59 @@ public class gameManager extends AppCompatActivity{
                 .show();
     }
 
-    public void openSaveScoreDialog() {
+    public void openSaveScoreDialog(int score) {
         final EditText input = new EditText(context);
-        new MaterialAlertDialogBuilder(context).setTitle("enter your name")
+        new MaterialAlertDialogBuilder(context)
+                .setTitle("Enter your name")
                 .setView(input)
                 .setPositiveButton("Save", (dialog, whichButton) -> {
                     String playerName = input.getText().toString();
-                    saveScore(playerName, score);
+
+                    // Check if we have location permissions
+                    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                            ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+                        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                        if (location == null) {
+                            location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                        }
+                        if (location != null) {
+                            double latitude = location.getLatitude();
+                            double longitude = location.getLongitude();
+                            saveScore(playerName, score, latitude, longitude);
+                        } else {
+                            // Handle case where location is null
+                            Toast.makeText(context, "Unable to save location. Location data not available.", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        // Handle lack of permissions appropriately
+                        Toast.makeText(context, "Location permissions are not granted.", Toast.LENGTH_SHORT).show();
+                    }
+
                     Toast.makeText(context, "Score saved!", Toast.LENGTH_SHORT).show();
                     gameDone();
                 })
                 .show(); // ensure the dialog is shown
     }
 
-
-    private void saveScore(String playerName, int score) {
+    public void saveScore(String playerName, int score, double latitude, double longitude) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("game_data", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        String scoreEntry = playerName + ":" + score;
-        editor.putString(playerName, scoreEntry);
+
+        for (int i = 9; i > 0; i--) {
+            editor.putString("score_" + i, sharedPreferences.getString("score_" + (i - 1), null));
+            editor.putString("name_" + i, sharedPreferences.getString("name_" + (i - 1), null));
+            editor.putLong("lat_" + i, sharedPreferences.getLong("lat_" + (i - 1), 0));
+            editor.putLong("lon_" + i, sharedPreferences.getLong("lon_" + (i - 1), 0));
+        }
+
+        editor.putString("score_" + 0, playerName + ":" + score);
+        editor.putString("name_" + 0, playerName);
+        editor.putLong("lat_" + 0, Double.doubleToRawLongBits(latitude));
+        editor.putLong("lon_" + 0, Double.doubleToRawLongBits(longitude));
+
         editor.apply();
     }
-
-    //////// finish saved score ///////////
 
     private void checkPlace() {
         if (zoo_animals[farmerPosRow-1][farmerPosCol].getVisibility() == View.VISIBLE) {
@@ -282,17 +323,20 @@ public class gameManager extends AppCompatActivity{
         }
     }
 
-    public void setSpeed(int yTilt) {
-        if (yTilt > 6) {
-            delay = 500;  // Increase speed
-            Toast.makeText(context, "slower", Toast.LENGTH_SHORT).show();
-        } else if (yTilt < -6) {
-            delay = 1500; // Decrease speed
-            Toast.makeText(context, "faster", Toast.LENGTH_SHORT).show();
+    public void setSpeed(int speed) {
+        Toast toast;
+        if (speed == slowDelay) {
+            delay = slowDelay;  // Increase speed
+            toast = Toast.makeText(context, "slower", Toast.LENGTH_SHORT);
+        } else if (speed == fastDelay) {
+            delay = fastDelay; // Decrease speed
+            toast = Toast.makeText(context, "faster", Toast.LENGTH_SHORT);
         } else {
             delay = 1000; // Normal speed
-            Toast.makeText(context, "regular", Toast.LENGTH_SHORT).show();
+            toast = Toast.makeText(context, "regular", Toast.LENGTH_SHORT);
         }
+        toast.show();
+        new Handler().postDelayed(toast::cancel, 500); // Cancel the toast after 500 milliseconds
     }
 
     public void findViews() {

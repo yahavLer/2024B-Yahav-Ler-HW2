@@ -8,7 +8,7 @@
     android:layout_height="match_parent"
     tools:context=".records_activity"
     android:orientation="vertical"
-    android:keepScreenOn="true"   >
+    android:keepScreenOn="true">
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/main_LBL_record"
