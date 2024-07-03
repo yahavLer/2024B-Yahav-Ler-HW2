@@ -9,13 +9,15 @@ public class GameActivity extends AppCompatActivity  {
 
     private boolean useSensors;
     private gameManager game;
+//    private SoundPlayer soundPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.game_view);
         useSensors = getIntent().getBooleanExtra("useSensors", false);
-
+//        MyBackgroundMusic.init(this);
+//        MyBackgroundMusic.getInstance().setResourceId(R.raw.gameloop);
         game = new gameManager(this, this, useSensors);
         game.findViews();
         game.initializeHorses();
@@ -24,7 +26,10 @@ public class GameActivity extends AppCompatActivity  {
         } else {
             game.ButtonVisibility();
         }
+//        makeSound();
+
         game.startGame(useSensors);
+//        soundPlayer = new SoundPlayer(this);
     }
     @Override
     protected void onResume() {
@@ -32,6 +37,7 @@ public class GameActivity extends AppCompatActivity  {
         if (game.getMoveDetector() != null) {
             game.getMoveDetector().start();
         }
+//        MyBackgroundMusic.getInstance().playMusic();
     }
 
     @Override
@@ -40,5 +46,9 @@ public class GameActivity extends AppCompatActivity  {
         if (game.getMoveDetector() != null) {
             game.getMoveDetector().stop();
         }
+//        MyBackgroundMusic.getInstance().pauseMusic();
     }
+//    private void makeSound() {
+//        soundPlayer.playSound(R.raw.gameloop);
+//    }
 }

@@ -54,6 +54,7 @@ public class gameManager extends AppCompatActivity {
     private GoogleMap myMap;
     Location currentLocation;
     FusedLocationProviderClient fusedLocationProviderClient;
+//    private SoundPlayer soundPlayer;
 
     public gameManager() {
         super();
@@ -64,6 +65,7 @@ public class gameManager extends AppCompatActivity {
         this.activity = gameActivity;
         this.gameSensors = gameSensors;
         this.sharedPreferences = context.getSharedPreferences("game_data", Context.MODE_PRIVATE);
+//        this.soundPlayer = new SoundPlayer(this);
     }
 
     private final Runnable scoreRunnable = new Runnable() {
@@ -251,6 +253,7 @@ public class gameManager extends AppCompatActivity {
             numLives--;
             Log.d(TAG, "numLives: "+ numLives);
             updateLive();
+//            makeSoundHorseCrash();
             vibrate();
         }
     }
@@ -297,15 +300,15 @@ public class gameManager extends AppCompatActivity {
     }
 
     private void vibrate(){
-        Vibrator vibrator = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
-        if (vibrator != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
-            } else {
-                vibrator.vibrate(500);
-            }
+        Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            VibrationEffect effect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE);
+            vibrator.vibrate(effect);
+        } else {
+            vibrator.vibrate(500);
         }
     }
+
 
     public void moveFarmerRight() {
         if (farmerPosCol < amountColl - 1) {
@@ -396,6 +399,10 @@ public class gameManager extends AppCompatActivity {
         zoo_animals[farmerPosRow][farmerPosCol].setVisibility(View.VISIBLE);
     }
 
+//    private void makeSoundHorseCrash() {
+//        soundPlayer.playSound(R.raw.horsecrash);
+//    }
+
     public MoveDetector getMoveDetector(){
         return moveDetector;
     }
@@ -413,6 +420,7 @@ public class gameManager extends AppCompatActivity {
         if (moveDetector != null) {
             moveDetector.stop();
         }
+//        MyBackgroundMusic.getInstance().pauseMusic();
     }
     @Override
     protected void onResume() {
@@ -420,5 +428,6 @@ public class gameManager extends AppCompatActivity {
         if (moveDetector != null) {
             moveDetector.start();
         }
+//        MyBackgroundMusic.getInstance().playMusic();
     }
 }
