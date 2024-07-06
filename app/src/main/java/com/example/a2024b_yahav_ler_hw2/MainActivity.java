@@ -12,12 +12,15 @@ public class MainActivity extends AppCompatActivity {
     Button btnPlayButton;
     Button btnPlaySensor;
     Button btnRecords;
+    private SoundPlayer soundPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_view);
+        soundPlayer = new SoundPlayer(this);
         findViews();
+        makeSound();
         btnPlaySensor.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -43,10 +46,30 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
+    private void makeSound() {
+        soundPlayer.playSound(R.raw.gameloop);
+    }
     private void findViews() {
         btnPlaySensor = findViewById(R.id.btn_senssor);
         btnPlayButton = findViewById(R.id.btn_Button);
         btnRecords = findViewById(R.id.btn_records);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        soundPlayer.playSound(R.raw.gameloop); // Play sound on resume
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        soundPlayer.stopSound(); // Stop sound on pause
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        soundPlayer.release(); // Release resources on destroy
     }
 }

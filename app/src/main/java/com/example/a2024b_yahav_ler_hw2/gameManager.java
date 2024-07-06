@@ -54,7 +54,7 @@ public class gameManager extends AppCompatActivity {
     private GoogleMap myMap;
     Location currentLocation;
     FusedLocationProviderClient fusedLocationProviderClient;
-//    private SoundPlayer soundPlayer;
+    private SoundPlayer soundPlayer;
 
     public gameManager() {
         super();
@@ -65,7 +65,7 @@ public class gameManager extends AppCompatActivity {
         this.activity = gameActivity;
         this.gameSensors = gameSensors;
         this.sharedPreferences = context.getSharedPreferences("game_data", Context.MODE_PRIVATE);
-//        this.soundPlayer = new SoundPlayer(this);
+        this.soundPlayer = new SoundPlayer(gameActivity);
     }
 
     private final Runnable scoreRunnable = new Runnable() {
@@ -78,7 +78,6 @@ public class gameManager extends AppCompatActivity {
             }
         }
     };
-
 
     public void startGame(boolean useSensors) {
         if (useSensors) {
@@ -201,7 +200,6 @@ public class gameManager extends AppCompatActivity {
                 .setView(input)
                 .setPositiveButton("Save", (dialog, whichButton) -> {
                     String playerName = input.getText().toString();
-
                     // Check if we have location permissions
                     if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                             ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -253,12 +251,10 @@ public class gameManager extends AppCompatActivity {
             numLives--;
             Log.d(TAG, "numLives: "+ numLives);
             updateLive();
-//            makeSoundHorseCrash();
             vibrate();
+            makeSoundCrash();
         }
     }
-
-
 
     public void gameDone() {
         stopGame();
@@ -266,7 +262,7 @@ public class gameManager extends AppCompatActivity {
         Log.d("pttt", "Game Done");
         zoo_left.setEnabled(false);
         zoo_right.setEnabled(false);
-        finish();
+        activity.finish();
     }
 
     public void stopGame() {
@@ -299,16 +295,18 @@ public class gameManager extends AppCompatActivity {
         }
     }
 
-    private void vibrate(){
-        Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+    private void vibrate() {
+        Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            VibrationEffect effect = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE);
-            vibrator.vibrate(effect);
+            v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
         } else {
-            vibrator.vibrate(500);
+            v.vibrate(500);
         }
     }
 
+    private void makeSoundCrash() {
+        soundPlayer.playSound(R.raw.horsecrash);
+    }
 
     public void moveFarmerRight() {
         if (farmerPosCol < amountColl - 1) {
@@ -399,10 +397,6 @@ public class gameManager extends AppCompatActivity {
         zoo_animals[farmerPosRow][farmerPosCol].setVisibility(View.VISIBLE);
     }
 
-//    private void makeSoundHorseCrash() {
-//        soundPlayer.playSound(R.raw.horsecrash);
-//    }
-
     public MoveDetector getMoveDetector(){
         return moveDetector;
     }
@@ -420,7 +414,6 @@ public class gameManager extends AppCompatActivity {
         if (moveDetector != null) {
             moveDetector.stop();
         }
-//        MyBackgroundMusic.getInstance().pauseMusic();
     }
     @Override
     protected void onResume() {
@@ -428,6 +421,5 @@ public class gameManager extends AppCompatActivity {
         if (moveDetector != null) {
             moveDetector.start();
         }
-//        MyBackgroundMusic.getInstance().playMusic();
     }
 }

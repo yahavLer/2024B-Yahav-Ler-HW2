@@ -93,8 +93,6 @@ public class MoveDetector {
         }
     }
 
-
-
     public void start(){
         sensorManager.registerListener(
                 sensorEventListener,

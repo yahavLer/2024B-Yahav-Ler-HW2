@@ -14,10 +14,10 @@ import com.google.android.material.textview.MaterialTextView;
 public class Fragment_List extends Fragment {
 
     private MaterialTextView list_LBL_user;
-    private String scores = ""; // משתנה לאחסון הנתונים הזמניים
+    private String scores = "";
 
     public void setScores(String scores) {
-        this.scores = scores; // שמור את הנתונים הזמניים
+        this.scores = scores;
         if (list_LBL_user != null) {
             list_LBL_user.setText(scores);
         }
@@ -29,11 +29,9 @@ public class Fragment_List extends Fragment {
         View view = inflater.inflate(R.layout.fragment_list_records, container, false);
         list_LBL_user = view.findViewById(R.id.list_LBL_user);
 
-        // הגדר את הנתונים בטקסט ויו אם הם זמינים
         if (!scores.isEmpty()) {
             list_LBL_user.setText(scores);
         }
-
         return view;
     }
 }
