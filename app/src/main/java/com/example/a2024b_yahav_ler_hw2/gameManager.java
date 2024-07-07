@@ -62,6 +62,7 @@ public class gameManager extends AppCompatActivity {
     Location currentLocation;
     FusedLocationProviderClient fusedLocationProviderClient;
     private SoundPlayer soundPlayer;
+    private int time=0;
     public gameManager() {
         super();
     }
@@ -78,10 +79,11 @@ public class gameManager extends AppCompatActivity {
         @Override
         public void run() {
             if (!isGameOver) {
+                time++;
                 score += 2;
                 numScore.setText(String.valueOf(score));
                 scoreHandler.postDelayed(this, SCORE_INTERVAL);
-                if (score%10==0){
+                if (time%10==0){
                     addGrass();
                 }
             }
@@ -164,20 +166,28 @@ public class gameManager extends AppCompatActivity {
                     zoo_animals[i + 1][j].setVisibility(View.INVISIBLE);
                 }
                 if (zoo_animals[i][j].getVisibility() == View.VISIBLE) {
-                    if (isGrassImage(zoo_animals[i][j])) {
-                        zoo_animals[i][j].setImageResource(horse);
-                        zoo_animals[i + 1][j].setImageResource(grass);
-                    }
-                    zoo_animals[i + 1][j].setVisibility(View.VISIBLE);
+                    Drawable drawable = zoo_animals[i][j].getDrawable();
                     zoo_animals[i][j].setVisibility(View.INVISIBLE);
+
+                    if (drawable != null && drawable.getConstantState() != null) {
+                        if (drawable.getConstantState().equals(ResourcesCompat.getDrawable(context.getResources(), grassImages, null).getConstantState())) {
+                            zoo_animals[i + 1][j].setImageResource(grassImages);
+                            zoo_animals[i + 1][j].setVisibility(View.VISIBLE);
+                        } else if (drawable.getConstantState().equals(ResourcesCompat.getDrawable(context.getResources(), horse, null).getConstantState())) {
+                            zoo_animals[i + 1][j].setImageResource(horse);
+                            zoo_animals[i + 1][j].setVisibility(View.VISIBLE);
+                        }
+                    }
                 }
             }
             if (i == 0) {
                 num = random.nextInt(5);
                 zoo_animals[0][num].setVisibility(View.VISIBLE);
+                zoo_animals[0][num].setImageResource(horse);
             }
         }
     }
+
 
     private boolean isGrassImage(ImageView imageView) {
         Drawable drawable = imageView.getDrawable();
