@@ -1,9 +1,13 @@
 package com.example.a2024b_yahav_ler_hw2;
 
 import static android.content.ContentValues.TAG;
+import static com.example.a2024b_yahav_ler_hw2.R.drawable.grass;
+import static com.example.a2024b_yahav_ler_hw2.R.drawable.horse;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
@@ -20,6 +24,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.res.ResourcesCompat;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -31,6 +37,7 @@ public class gameManager extends AppCompatActivity {
     private AppCompatImageButton zoo_right;
     private ImageView[][] zoo_animals;
     private ImageView[] zoo_live;
+    private int grassImages = R.drawable.grass;
     private int farmerPosCol;
     private int farmerPosRow;
     private boolean isGameOver = false;
@@ -55,7 +62,6 @@ public class gameManager extends AppCompatActivity {
     Location currentLocation;
     FusedLocationProviderClient fusedLocationProviderClient;
     private SoundPlayer soundPlayer;
-
     public gameManager() {
         super();
     }
@@ -72,12 +78,16 @@ public class gameManager extends AppCompatActivity {
         @Override
         public void run() {
             if (!isGameOver) {
-                score += 10;
+                score += 2;
                 numScore.setText(String.valueOf(score));
                 scoreHandler.postDelayed(this, SCORE_INTERVAL);
+                if (score%10==0){
+                    addGrass();
+                }
             }
         }
     };
+
 
     public void startGame(boolean useSensors) {
         if (useSensors) {
@@ -154,6 +164,10 @@ public class gameManager extends AppCompatActivity {
                     zoo_animals[i + 1][j].setVisibility(View.INVISIBLE);
                 }
                 if (zoo_animals[i][j].getVisibility() == View.VISIBLE) {
+                    if (isGrassImage(zoo_animals[i][j])) {
+                        zoo_animals[i][j].setImageResource(horse);
+                        zoo_animals[i + 1][j].setImageResource(grass);
+                    }
                     zoo_animals[i + 1][j].setVisibility(View.VISIBLE);
                     zoo_animals[i][j].setVisibility(View.INVISIBLE);
                 }
@@ -164,6 +178,21 @@ public class gameManager extends AppCompatActivity {
             }
         }
     }
+
+    private boolean isGrassImage(ImageView imageView) {
+        Drawable drawable = imageView.getDrawable();
+        Drawable grassDrawable = ResourcesCompat.getDrawable(context.getResources(), R.drawable.grass, null);
+
+        return drawable != null && grassDrawable != null && drawable.getConstantState().equals(grassDrawable.getConstantState());
+    }
+
+    public void addGrass() {
+        Random rand = new Random();
+        int lane = rand.nextInt(zoo_animals[0].length);
+        zoo_animals[0][lane].setImageResource(grass);
+    }
+
+
 
     public void checkLives() {
         if (numLives == 0 && !isGameOver) {
@@ -248,11 +277,18 @@ public class gameManager extends AppCompatActivity {
 
     private void checkPlace() {
         if (zoo_animals[farmerPosRow-1][farmerPosCol].getVisibility() == View.VISIBLE) {
-            numLives--;
-            Log.d(TAG, "numLives: "+ numLives);
-            updateLive();
-            vibrate();
-            makeSoundCrash();
+            if (isGrassImage(zoo_animals[farmerPosRow-1][farmerPosCol])){
+                makeSoundGrass();
+                score+=10;
+                numScore.setText(String.valueOf(score));
+            }
+            else{
+                numLives--;
+                Log.d(TAG, "numLives: "+ numLives);
+                updateLive();
+                vibrate();
+                makeSoundCrash();
+            }
         }
     }
 
@@ -308,6 +344,10 @@ public class gameManager extends AppCompatActivity {
         soundPlayer.playSound(R.raw.horsecrash);
     }
 
+    private void makeSoundGrass() {
+        soundPlayer.playSound(R.raw.grass);
+    }
+
     public void moveFarmerRight() {
         if (farmerPosCol < amountColl - 1) {
             zoo_animals[farmerPosRow][farmerPosCol].setVisibility(View.INVISIBLE);
@@ -329,15 +369,17 @@ public class gameManager extends AppCompatActivity {
         if (speed == slowDelay) {
             delay = slowDelay;  // Increase speed
             toast = Toast.makeText(context, "slower", Toast.LENGTH_SHORT);
+            new Handler().postDelayed(toast::cancel, 500); // Cancel the toast after 500 milliseconds
         } else if (speed == fastDelay) {
             delay = fastDelay; // Decrease speed
             toast = Toast.makeText(context, "faster", Toast.LENGTH_SHORT);
+            new Handler().postDelayed(toast::cancel, 500); // Cancel the toast after 500 milliseconds
         } else {
             delay = 1000; // Normal speed
             toast = Toast.makeText(context, "regular", Toast.LENGTH_SHORT);
+            new Handler().postDelayed(toast::cancel, 500); // Cancel the toast after 500 milliseconds
         }
         toast.show();
-        new Handler().postDelayed(toast::cancel, 500); // Cancel the toast after 500 milliseconds
     }
 
     public void findViews() {
