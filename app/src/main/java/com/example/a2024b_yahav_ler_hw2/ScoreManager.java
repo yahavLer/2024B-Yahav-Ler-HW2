@@ -32,6 +32,8 @@ public class ScoreManager {
         saveRecords(records);
     }
 
+
+
     public List<ScoreRecord> getRecords() {
         String json = preferences.getString(SCORES_KEY, "");
         Type type = new TypeToken<List<ScoreRecord>>() {}.getType();

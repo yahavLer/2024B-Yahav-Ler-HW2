@@ -79,7 +79,6 @@ public class GameManager extends AppCompatActivity implements CallBack_List{
         this.soundPlayer = new SoundPlayer(gameActivity);
         this.scoreManager = new ScoreManager(context);
     }
-
     public void setCurrentLocation(Location location) {
         this.currentLocation = location;
     }
@@ -232,32 +231,34 @@ public class GameManager extends AppCompatActivity implements CallBack_List{
                 .setPositiveButton("Save", (dialog, whichButton) -> {
                     String playerName = input.getText().toString();
                     callBackList.addPlayer(playerName);
-                    saveScoreWithLocation(playerName, score);
                     Toast.makeText(context, "Score saved!", Toast.LENGTH_SHORT).show();
                     gameDone();
                 })
                 .show(); // ensure the dialog is shown
     }
 
-
-    private void saveScoreWithLocation(String playerName, int score) {
+    @Override
+    public void addPlayer(String user) {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
             return;
         }
-
-        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-        if (locationManager != null) {
-            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if (location != null) {
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
-                scoreManager.addRecord(playerName, score, latitude, longitude);
-            }
+//        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+//        if (locationManager != null) {
+//            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+//            if (location != null) {
+//                scoreManager.addRecord(user, score, location.getLatitude(), location.getLongitude());
+//            }else {
+//                scoreManager.addRecord(user, score, 0, 0);
+//            }
+//        }
+        if (currentLocation != null) {
+            scoreManager.addRecord(user, score, currentLocation.getLatitude(), currentLocation.getLongitude());
+        } else {
+            scoreManager.addRecord(user, score, 0, 0);
         }
     }
-
 
     private void checkPlace() {
         if (zoo_animals[farmerPosRow-1][farmerPosCol].getVisibility() == View.VISIBLE) {
@@ -447,14 +448,4 @@ public class GameManager extends AppCompatActivity implements CallBack_List{
         }
     }
 
-    @Override
-    public void addPlayer(String user) {
-        if (currentLocation != null) {
-//            ScoreRecord scoreRecord = new ScoreRecord(user, score, currentLocation.getLatitude(), currentLocation.getLongitude());
-            scoreManager.addRecord(user, score, currentLocation.getLatitude(), currentLocation.getLongitude());
-        } else {
-//            ScoreRecord scoreRecord = new Player(playerName, ticks, 0, 0);
-            scoreManager.addRecord(user, score, 0, 0);
-        }
-    }
 }
