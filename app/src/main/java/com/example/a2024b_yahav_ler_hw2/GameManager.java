@@ -1,6 +1,8 @@
 package com.example.a2024b_yahav_ler_hw2;
 
 import static android.content.ContentValues.TAG;
+
+
 import static com.example.a2024b_yahav_ler_hw2.R.drawable.grass;
 import static com.example.a2024b_yahav_ler_hw2.R.drawable.horse;
 
@@ -31,12 +33,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Random;
 import android.Manifest;
 
-public class gameManager extends AppCompatActivity {
+public class GameManager extends AppCompatActivity implements CallBack_List{
     private AppCompatImageButton zoo_left;
     private AppCompatImageButton zoo_right;
     private ImageView[][] zoo_animals;
@@ -61,26 +61,27 @@ public class gameManager extends AppCompatActivity {
     private int score = 0; // משתנה ניקוד
     private final int SCORE_INTERVAL = 5000; // כל כמה זמן להוסיף נקודות (מילישניות)
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-    private GoogleMap myMap;
-    Location currentLocation;
-    FusedLocationProviderClient fusedLocationProviderClient;
     private SoundPlayer soundPlayer;
     private int time=0;
+    private ScoreManager scoreManager;
+    private Location currentLocation;
 
-    private static final String PREFS_NAME = "GameScores";
-    private static final String SCORES_KEY = "Scores";
-    private SharedPreferences sharedPreferences;
 
-    public gameManager() {
+
+    public GameManager() {
         super();
     }
 
-    public gameManager(Context context, AppCompatActivity gameActivity, boolean gameSensors) {
+    public GameManager(Context context, AppCompatActivity gameActivity, boolean gameSensors) {
         this.context = context;
         this.activity = gameActivity;
         this.gameSensors = gameSensors;
-        this.sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         this.soundPlayer = new SoundPlayer(gameActivity);
+        this.scoreManager = new ScoreManager(context);
+    }
+
+    public void setCurrentLocation(Location location) {
+        this.currentLocation = location;
     }
 
     public void startGame(boolean useSensors) {
@@ -215,7 +216,7 @@ public class gameManager extends AppCompatActivity {
         new MaterialAlertDialogBuilder(context).setTitle("No lives")
                 .setMessage("your score: " + score +"\n Do you want to save your score?")
                 .setPositiveButton("Yes", (dialog, which) -> {
-                    openSaveScoreDialog(score);
+                    openSaveScoreDialog(score, this);
                 })
                 .setNegativeButton("No", (dialog, which) -> {
                     gameDone();
@@ -223,85 +224,40 @@ public class gameManager extends AppCompatActivity {
                 .show();
     }
 
-    public void openSaveScoreDialog(int score) {
+    public void openSaveScoreDialog(int score, CallBack_List callBackList) {
         final EditText input = new EditText(context);
         new MaterialAlertDialogBuilder(context)
                 .setTitle("Enter your name")
                 .setView(input)
                 .setPositiveButton("Save", (dialog, whichButton) -> {
                     String playerName = input.getText().toString();
-                    // Check if we have location permissions
-                    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                            ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-                        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                        if (location == null) {
-                            location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                        }
-                        if (location != null) {
-                            saveScore(playerName, score, location);
-                        } else {
-                            // Handle case where location is null
-                            Toast.makeText(context, "Unable to save location. Location data not available.", Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        // Handle lack of permissions appropriately
-                        Toast.makeText(context, "Location permissions are not granted.", Toast.LENGTH_SHORT).show();
-                    }
-
+                    callBackList.addPlayer(playerName);
+                    saveScoreWithLocation(playerName, score);
                     Toast.makeText(context, "Score saved!", Toast.LENGTH_SHORT).show();
                     gameDone();
                 })
                 .show(); // ensure the dialog is shown
     }
 
-//    public void saveScore(String playerName, int score, double latitude, double longitude) {
-//        SharedPreferences sharedPreferences = context.getSharedPreferences("game_data", Context.MODE_PRIVATE);
-//        SharedPreferences.Editor editor = sharedPreferences.edit();
-//
-//        for (int i = 9; i > 0; i--) {
-//            editor.putString("score_" + i, sharedPreferences.getString("score_" + (i - 1), null));
-//            editor.putString("name_" + i, sharedPreferences.getString("name_" + (i - 1), null));
-//            editor.putLong("lat_" + i, sharedPreferences.getLong("lat_" + (i - 1), 0));
-//            editor.putLong("lon_" + i, sharedPreferences.getLong("lon_" + (i - 1), 0));
-//        }
-//
-//        editor.putString("score_" + 0, playerName + ":" + score);
-//        editor.putString("name_" + 0, playerName);
-//        editor.putLong("lat_" + 0, Double.doubleToRawLongBits(latitude));
-//        editor.putLong("lon_" + 0, Double.doubleToRawLongBits(longitude));
-//
-//        editor.apply();
-//    }
 
-    public void saveScore(String playerName, int score, Location location) {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        ArrayList<ScoreRecord> scores = getScores();
-
-        scores.add(new ScoreRecord(playerName, score, location.getLatitude(), location.getLongitude()));
-
-        // Sort the scores in descending order
-        Collections.sort(scores, new Comparator<ScoreRecord>() {
-            @Override
-            public int compare(ScoreRecord o1, ScoreRecord o2) {
-                return o2.getScore() - o1.getScore();
-            }
-        });
-
-        // Keep only top 10 scores
-        if (scores.size() > 10) {
-            scores = new ArrayList<>(scores.subList(0, 10));
+    private void saveScoreWithLocation(String playerName, int score) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+            return;
         }
 
-        // Save the updated scores list back to SharedPreferences
-        editor.putString(SCORES_KEY, ScoreRecord.toJson(scores));
-        editor.apply();
+        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        if (locationManager != null) {
+            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (location != null) {
+                double latitude = location.getLatitude();
+                double longitude = location.getLongitude();
+                scoreManager.addRecord(playerName, score, latitude, longitude);
+            }
+        }
     }
 
-    private ArrayList<ScoreRecord> getScores() {
-        String json = sharedPreferences.getString(SCORES_KEY, "");
-        return ScoreRecord.fromJson(json);
-    }
 
     private void checkPlace() {
         if (zoo_animals[farmerPosRow-1][farmerPosCol].getVisibility() == View.VISIBLE) {
@@ -488,6 +444,17 @@ public class gameManager extends AppCompatActivity {
         super.onResume();
         if (moveDetector != null) {
             moveDetector.start();
+        }
+    }
+
+    @Override
+    public void addPlayer(String user) {
+        if (currentLocation != null) {
+//            ScoreRecord scoreRecord = new ScoreRecord(user, score, currentLocation.getLatitude(), currentLocation.getLongitude());
+            scoreManager.addRecord(user, score, currentLocation.getLatitude(), currentLocation.getLongitude());
+        } else {
+//            ScoreRecord scoreRecord = new Player(playerName, ticks, 0, 0);
+            scoreManager.addRecord(user, score, 0, 0);
         }
     }
 }

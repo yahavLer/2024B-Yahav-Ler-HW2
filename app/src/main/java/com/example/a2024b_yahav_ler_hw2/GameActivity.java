@@ -1,7 +1,6 @@
 package com.example.a2024b_yahav_ler_hw2;
 
 
-import android.media.MediaPlayer;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class GameActivity extends AppCompatActivity  {
 
     private boolean useSensors;
-    private gameManager game;
+    private GameManager game;
     private MyBackgroundMusic backgroundMusic;
     private SoundPlayer soundPlayer;
 
@@ -19,7 +18,7 @@ public class GameActivity extends AppCompatActivity  {
         setContentView(R.layout.game_view);
         soundPlayer = new SoundPlayer(this);
         useSensors = getIntent().getBooleanExtra("useSensors", false);
-        game = new gameManager(this, this, useSensors);
+        game = new GameManager(this, this, useSensors);
         game.findViews();
         game.initializeHorses();
         makeSoundBack();
@@ -71,4 +70,5 @@ public class GameActivity extends AppCompatActivity  {
         }
         game.stopGame();
     }
+
 }
