@@ -19,14 +19,14 @@ public class SoundPlayer {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
-    public void playSound(int res) {
+    public void playSound(int res, boolean looping) {
         executor.execute(() -> {
             if (mediaPlayer != null) {
                 mediaPlayer.release();
             }
 
             mediaPlayer = MediaPlayer.create(context, res);
-            mediaPlayer.setLooping(false);
+            mediaPlayer.setLooping(looping);
             mediaPlayer.setVolume(1.0f, 1.0f);
             mediaPlayer.start();
             mediaPlayer.setOnCompletionListener(mp -> {

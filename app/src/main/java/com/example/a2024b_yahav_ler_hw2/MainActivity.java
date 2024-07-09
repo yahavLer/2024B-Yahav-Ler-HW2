@@ -47,7 +47,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     private void makeSound() {
-        soundPlayer.playSound(R.raw.gameloop);
+        boolean looping=true;
+        soundPlayer.playSound(R.raw.gameloop, looping);
     }
     private void findViews() {
         btnPlaySensor = findViewById(R.id.btn_senssor);
@@ -58,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        soundPlayer.playSound(R.raw.gameloop); // Play sound on resume
+        soundPlayer.playSound(R.raw.gameloop,true); // Play sound on resume
     }
 
     @Override

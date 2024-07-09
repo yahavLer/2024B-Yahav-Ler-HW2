@@ -29,6 +29,10 @@ import androidx.core.content.res.ResourcesCompat;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Random;
 import android.Manifest;
 
@@ -41,6 +45,7 @@ public class gameManager extends AppCompatActivity {
     private int farmerPosCol;
     private int farmerPosRow;
     private boolean isGameOver = false;
+    private boolean loop;
     private int amountRow, amountColl;
     private int delay = 1000;
     private int fastDelay = 500;
@@ -54,15 +59,18 @@ public class gameManager extends AppCompatActivity {
     private boolean gameSensors;
     private TextView numScore;
     private int score = 0; // משתנה ניקוד
-    private final Handler scoreHandler = new Handler(); // Handler עבור הניקוד
     private final int SCORE_INTERVAL = 5000; // כל כמה זמן להוסיף נקודות (מילישניות)
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-    private SharedPreferences sharedPreferences;
     private GoogleMap myMap;
     Location currentLocation;
     FusedLocationProviderClient fusedLocationProviderClient;
     private SoundPlayer soundPlayer;
     private int time=0;
+
+    private static final String PREFS_NAME = "GameScores";
+    private static final String SCORES_KEY = "Scores";
+    private SharedPreferences sharedPreferences;
+
     public gameManager() {
         super();
     }
@@ -71,25 +79,9 @@ public class gameManager extends AppCompatActivity {
         this.context = context;
         this.activity = gameActivity;
         this.gameSensors = gameSensors;
-        this.sharedPreferences = context.getSharedPreferences("game_data", Context.MODE_PRIVATE);
+        this.sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         this.soundPlayer = new SoundPlayer(gameActivity);
     }
-
-    private final Runnable scoreRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (!isGameOver) {
-                time++;
-                score += 2;
-                numScore.setText(String.valueOf(score));
-                scoreHandler.postDelayed(this, SCORE_INTERVAL);
-                if (time%10==0){
-                    addGrass();
-                }
-            }
-        }
-    };
-
 
     public void startGame(boolean useSensors) {
         if (useSensors) {
@@ -101,15 +93,19 @@ public class gameManager extends AppCompatActivity {
             public void run() {
                 if (!isGameOver) {
                     moveHorse();
+                    time++;
+                    score += 2;
+                    numScore.setText(String.valueOf(score));
+                    if (time%5==0){
+                        addGrass();
+                    }
                 } else {
                     return;
                 }
                 handler.postDelayed(runnable, delay);
-                scoreHandler.postDelayed(scoreRunnable, SCORE_INTERVAL);
             }
         };
         start();
-        startScore();
     }
 
 
@@ -117,9 +113,6 @@ public class gameManager extends AppCompatActivity {
         handler.postDelayed(runnable, delay);
     }
 
-    private void startScore() {
-        scoreHandler.postDelayed(scoreRunnable, SCORE_INTERVAL); // התחלת רץ הניקוד
-    }
 
     private void initMoveDetector() {
         moveDetector = new MoveDetector(context, new MoveCallback() {
@@ -202,8 +195,6 @@ public class gameManager extends AppCompatActivity {
         zoo_animals[0][lane].setImageResource(grass);
     }
 
-
-
     public void checkLives() {
         if (numLives == 0 && !isGameOver) {
             isGameOver = true;
@@ -248,9 +239,7 @@ public class gameManager extends AppCompatActivity {
                             location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                         }
                         if (location != null) {
-                            double latitude = location.getLatitude();
-                            double longitude = location.getLongitude();
-                            saveScore(playerName, score, latitude, longitude);
+                            saveScore(playerName, score, location);
                         } else {
                             // Handle case where location is null
                             Toast.makeText(context, "Unable to save location. Location data not available.", Toast.LENGTH_SHORT).show();
@@ -266,23 +255,52 @@ public class gameManager extends AppCompatActivity {
                 .show(); // ensure the dialog is shown
     }
 
-    public void saveScore(String playerName, int score, double latitude, double longitude) {
-        SharedPreferences sharedPreferences = context.getSharedPreferences("game_data", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
+//    public void saveScore(String playerName, int score, double latitude, double longitude) {
+//        SharedPreferences sharedPreferences = context.getSharedPreferences("game_data", Context.MODE_PRIVATE);
+//        SharedPreferences.Editor editor = sharedPreferences.edit();
+//
+//        for (int i = 9; i > 0; i--) {
+//            editor.putString("score_" + i, sharedPreferences.getString("score_" + (i - 1), null));
+//            editor.putString("name_" + i, sharedPreferences.getString("name_" + (i - 1), null));
+//            editor.putLong("lat_" + i, sharedPreferences.getLong("lat_" + (i - 1), 0));
+//            editor.putLong("lon_" + i, sharedPreferences.getLong("lon_" + (i - 1), 0));
+//        }
+//
+//        editor.putString("score_" + 0, playerName + ":" + score);
+//        editor.putString("name_" + 0, playerName);
+//        editor.putLong("lat_" + 0, Double.doubleToRawLongBits(latitude));
+//        editor.putLong("lon_" + 0, Double.doubleToRawLongBits(longitude));
+//
+//        editor.apply();
+//    }
 
-        for (int i = 9; i > 0; i--) {
-            editor.putString("score_" + i, sharedPreferences.getString("score_" + (i - 1), null));
-            editor.putString("name_" + i, sharedPreferences.getString("name_" + (i - 1), null));
-            editor.putLong("lat_" + i, sharedPreferences.getLong("lat_" + (i - 1), 0));
-            editor.putLong("lon_" + i, sharedPreferences.getLong("lon_" + (i - 1), 0));
+    public void saveScore(String playerName, int score, Location location) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        ArrayList<ScoreRecord> scores = getScores();
+
+        scores.add(new ScoreRecord(playerName, score, location.getLatitude(), location.getLongitude()));
+
+        // Sort the scores in descending order
+        Collections.sort(scores, new Comparator<ScoreRecord>() {
+            @Override
+            public int compare(ScoreRecord o1, ScoreRecord o2) {
+                return o2.getScore() - o1.getScore();
+            }
+        });
+
+        // Keep only top 10 scores
+        if (scores.size() > 10) {
+            scores = new ArrayList<>(scores.subList(0, 10));
         }
 
-        editor.putString("score_" + 0, playerName + ":" + score);
-        editor.putString("name_" + 0, playerName);
-        editor.putLong("lat_" + 0, Double.doubleToRawLongBits(latitude));
-        editor.putLong("lon_" + 0, Double.doubleToRawLongBits(longitude));
-
+        // Save the updated scores list back to SharedPreferences
+        editor.putString(SCORES_KEY, ScoreRecord.toJson(scores));
         editor.apply();
+    }
+
+    private ArrayList<ScoreRecord> getScores() {
+        String json = sharedPreferences.getString(SCORES_KEY, "");
+        return ScoreRecord.fromJson(json);
     }
 
     private void checkPlace() {
@@ -313,7 +331,6 @@ public class gameManager extends AppCompatActivity {
 
     public void stopGame() {
         handler.removeCallbacks(runnable);
-        scoreHandler.removeCallbacks(scoreRunnable); // הפסקת רץ הניקוד
     }
 
     public void continueGame() {
@@ -325,7 +342,6 @@ public class gameManager extends AppCompatActivity {
         zoo_left.setEnabled(true);
         zoo_right.setEnabled(true);
         start();
-        startScore();
     }
 
     private void updateLive() {
@@ -351,11 +367,13 @@ public class gameManager extends AppCompatActivity {
     }
 
     private void makeSoundCrash() {
-        soundPlayer.playSound(R.raw.horsecrash);
+        loop = false;
+        soundPlayer.playSound(R.raw.horsecrash, loop);
     }
 
     private void makeSoundGrass() {
-        soundPlayer.playSound(R.raw.grass);
+        loop = false;
+        soundPlayer.playSound(R.raw.grass, loop);
     }
 
     public void moveFarmerRight() {
@@ -422,13 +440,11 @@ public class gameManager extends AppCompatActivity {
     public void ButtonUnVisibility() {
         zoo_left.setVisibility(View.GONE);
         zoo_right.setVisibility(View.GONE);
-//        initMoveDetector();
     }
 
     public void ButtonVisibility() {
         zoo_left.setVisibility(View.VISIBLE);
         zoo_right.setVisibility(View.VISIBLE);
-//        initButton();
     }
 
     public void initializeHorses() {

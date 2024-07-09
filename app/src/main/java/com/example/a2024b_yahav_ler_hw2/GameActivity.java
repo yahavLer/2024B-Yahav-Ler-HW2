@@ -41,11 +41,11 @@ public class GameActivity extends AppCompatActivity  {
             backgroundMusic.playMusic();
         }
         if(soundPlayer!=null){
-            soundPlayer.playSound(R.raw.gameloop);
+            soundPlayer.playSound(R.raw.gameloop, true);
         }
     }
     private void makeSoundBack() {
-        soundPlayer.playSound(R.raw.gameloop);
+        soundPlayer.playSound(R.raw.gameloop, true);
     }
     @Override
     protected void onPause() {
