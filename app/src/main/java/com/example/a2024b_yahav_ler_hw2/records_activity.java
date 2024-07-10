@@ -1,4 +1,5 @@
 package com.example.a2024b_yahav_ler_hw2;
+
 import android.Manifest;
 
 import android.content.Context;
@@ -58,13 +59,15 @@ public class records_activity extends AppCompatActivity implements OnMapReadyCal
 
         sharedPreferences = getSharedPreferences("GamePrefs", Context.MODE_PRIVATE);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            getLastLocation();
+        }
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
-
         getLastLocation();
 
         scoreManager = new ScoreManager(this);
@@ -77,34 +80,29 @@ public class records_activity extends AppCompatActivity implements OnMapReadyCal
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
             return;
         }
-        fusedLocationProviderClient.getLastLocation()
-                .addOnSuccessListener(this, location -> {
-                    if (location != null) {
-                        saveLocation(location);
-                    }
-                });
+        Task<Location> task = fusedLocationProviderClient.getLastLocation();
+        task.addOnSuccessListener(new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                if (location != null) {
+                    currentLocation = location;
+
+                    SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+                    mapFragment.getMapAsync(records_activity.this);
+                }
+            }
+        });
     }
-    private void saveLocation(Location location) {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("lastLatitude", String.valueOf(location.getLatitude()));
-        editor.putString("lastLongitude", String.valueOf(location.getLongitude()));
-        editor.apply();
-    }
+
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(@NonNull GoogleMap googleMap) {
         myMap = googleMap;
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
-            return;
+        if (currentLocation != null) {
+            LatLng currentLocationLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+            myMap.addMarker(new MarkerOptions().position(currentLocationLatLng).title("My location"));
+            float zoomLevel = 15.0f; // 1 smallest zoom level to 21 largest
+            myMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocationLatLng, zoomLevel));
         }
-        myMap.setMyLocationEnabled(true);
-
-        String lastLatitude = sharedPreferences.getString("lastLatitude", "0");
-        String lastLongitude = sharedPreferences.getString("lastLongitude", "0");
-        LatLng lastLocation = new LatLng(Double.parseDouble(lastLatitude), Double.parseDouble(lastLongitude));
-        myMap.addMarker(new MarkerOptions().position(lastLocation).title("Last Played Location"));
-        myMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastLocation, 15));
     }
 
     @Override
