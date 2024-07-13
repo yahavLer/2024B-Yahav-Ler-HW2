@@ -7,6 +7,7 @@ import static com.example.a2024b_yahav_ler_hw2.R.drawable.grass;
 import static com.example.a2024b_yahav_ler_hw2.R.drawable.horse;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
@@ -96,7 +97,7 @@ public class GameManager extends AppCompatActivity implements CallBack_List{
                     time++;
                     score += 2;
                     numScore.setText(String.valueOf(score));
-                    if (time%5==0){
+                    if (time%3==0){
                         addGrass();
                     }
                 } else {
@@ -130,17 +131,17 @@ public class GameManager extends AppCompatActivity implements CallBack_List{
                 }
             }
 
-            @Override
-            public void moveBackward() {
-                if (moveDetector.getTiltBackwardCount() > 0)
-                    setSpeed(slowDelay);
-            }
-
-            @Override
-            public void moveForward() {
-                if (moveDetector.getTiltForwardCount() > 0)
-                    setSpeed(fastDelay);
-            }
+//            @Override
+//            public void moveBackward() {
+//                if (moveDetector.getTiltBackwardCount() > 0)
+//                    setSpeed(slowDelay);
+//            }
+//
+//            @Override
+//            public void moveForward() {
+//                if (moveDetector.getTiltForwardCount() > 0)
+//                    setSpeed(fastDelay);
+//            }
         });
     }
 
@@ -218,6 +219,18 @@ public class GameManager extends AppCompatActivity implements CallBack_List{
                     openSaveScoreDialog(score, this);
                 })
                 .setNegativeButton("No", (dialog, which) -> {
+                    openContinueDialog();
+                })
+                .show();
+    }
+
+    public void openContinueDialog() {
+        new MaterialAlertDialogBuilder(context).setTitle("play again?")
+                .setMessage("Do you want to play again?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    continueGame();
+                })
+                .setNegativeButton("No", (dialog, which) -> {
                     gameDone();
                 })
                 .show();
@@ -239,20 +252,6 @@ public class GameManager extends AppCompatActivity implements CallBack_List{
 
     @Override
     public void addPlayer(String user) {
-//        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-//                ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-//            return;
-//        }
-//        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-//        if (locationManager != null) {
-//            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-//            if (location != null) {
-//                scoreManager.addRecord(user, score, location.getLatitude(), location.getLongitude());
-//            }else {
-//                scoreManager.addRecord(user, score, 0, 0);
-//            }
-//        }
         if (currentLocation != null) {
             scoreManager.addRecord(user, score, currentLocation.getLatitude(), currentLocation.getLongitude());
         } else {

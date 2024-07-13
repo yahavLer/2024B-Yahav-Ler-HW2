@@ -1,0 +1,60 @@
+horse Game Application
+
+Introduction
+The Game Activity Application is designed to track and manage game activities and scores. It provides a user-friendly interface for interacting with game records, detecting moves, and managing scores. The game offers two different modes of play: using buttons or using sensors. Additionally, players can view the high scores and see their locations on a map.
+
+Features
+Two game modes: Button-based and Sensor-based.
+Track and display game records and high scores.
+View high scores and their locations on a map.
+
+Usage
+Once the application is installed, you can:
+
+Start the application to track game activities.
+View and manage game records and scores.
+Detect moves during the game.
+Main Screen Description
+The main screen of the Game Activity Application features three buttons:
+
+Button Game Mode: Starts the game where players interact using on-screen buttons.
+Sensor Game Mode: Starts the game where players interact using the device's sensors (e.g., accelerometer).
+View High Scores: Displays the high scores. When a high score is selected, its location is shown on a map.
+
+File Descriptions
+
+1. GameActivity.java
+Handles the main game activity, including the initialization and management of game components.
+
+2. GameManager.java
+Manages the overall game logic and flow.
+
+3. MainActivity.java
+The main entry point of the application, responsible for starting the game activity.
+
+4. MoveCallback.java
+Defines callback methods for handling game moves.
+
+5. MoveDetector.java
+Detects and processes moves made during the game.
+
+6. records_activity.java
+Handles the activity related to displaying and managing game records.
+
+7. ScoreManager.java
+Manages the scores, including adding, updating, and retrieving scores.
+
+8. ScoreRecord.java
+Represents a score record with relevant data fields.
+
+9. App.java
+Main application class responsible for initializing and configuring the application.
+
+10. CallBack_List.java
+Defines a list of callback methods used throughout the application.
+
+11. MyBackgroundMusic.java
+Handles the background music functionality, including playing and stopping music tracks.
+
+12. SoundPlayer.java
+Manages sound effects and plays various sounds based on game events.

@@ -79,17 +79,17 @@ public class MoveDetector {
                 }
             }
 
-            if (y > 4.0) {
-                tiltBackwardCount++;
-                if (moveCallback != null) {
-                    moveCallback.moveBackward();
-                }
-            } else if (y < -4.0) {
-                tiltForwardCount++;
-                if (moveCallback != null) {
-                    moveCallback.moveForward();
-                }
-            }
+//            if (y > 4.0) {
+//                tiltBackwardCount++;
+//                if (moveCallback != null) {
+//                    moveCallback.moveBackward();
+//                }
+//            } else if (y < -4.0) {
+//                tiltForwardCount++;
+//                if (moveCallback != null) {
+//                    moveCallback.moveForward();
+//                }
+//            }
         }
     }
 

@@ -7,7 +7,7 @@ public interface MoveCallback {
 
     void moveLeft();
 
-    void moveBackward();
-
-    void moveForward();
+//    void moveBackward();
+//
+//    void moveForward();
 }
